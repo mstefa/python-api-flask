@@ -1,7 +1,36 @@
 from flask import Flask, jsonify, request
+from flask_pymongo import PyMongo
+from werkzeug.security import generate_password_hash, check_password_hash
 from products import products
 
+
 app = Flask(__name__)
+app.config['MONGO_URI']='mongodb://localhost/ecommercetest'
+mongo = PyMongo(app)
+
+@app.route('/users', methods=['POST'])
+def create_user():
+  username = request.json['username']
+  email = request.json['email']
+  password = request.json['password']
+
+  if username and email and password:
+    hashed_password = generate_password_hash(password)
+    id = mongo.db.user.insert_one(
+      {'username': username,
+      'email': email,
+      'password': hashed_password
+      }
+    )
+    response = {
+      'message': 'user created',
+      'id': str(id),
+      'username':username
+    }
+    return response
+  else:
+    return {'message': 'ERROR: something went wrong'}
+
 
 @app.route('/ping')
 def ping():
